@@ -3,16 +3,9 @@ import time
 
 from PySide6.QtCore import QObject, Signal
 
-from YeelightScreenSync import (
-    DEFAULT_CONFIG,
-    LIGHT_STATE_PROPS,
-    YeelightClient,
-    average_screen_color,
-    color_distance,
-    hsv_signature,
-    load_config,
-    save_config,
-)
+from core.config import DEFAULT_CONFIG, load_config, save_config
+from core.screen_color import average_screen_color, color_distance, hsv_signature
+from core.yeelight_client import LIGHT_STATE_PROPS, YeelightClient
 
 
 def normalize_config(config: dict) -> dict:

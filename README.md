@@ -2,11 +2,6 @@
 
 Yeelight Sync Pro 是一个 Windows 桌面工具，可以采集屏幕平均颜色，并通过 Yeelight 局域网控制协议把颜色同步到支持 LAN Control 的 Yeelight 灯带或灯泡。
 
-项目提供两套入口：
-
-- `main.py`：现代 PySide6 + QFluentWidgets 界面，推荐使用。
-- `YeelightScreenSync.py`：早期 Tkinter 单文件版本，保留用于兼容和调试。
-
 ## 功能特性
 
 - 实时采集全屏或中心区域颜色。
@@ -34,24 +29,10 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-如果不使用 `requirements.txt`，也可以手动安装：
-
-```powershell
-pip install PySide6 PySide6-Fluent-Widgets pillow pystray
-```
-
 ## 运行
-
-推荐启动新版界面：
 
 ```powershell
 python main.py
-```
-
-也可以运行旧版 Tkinter 单文件界面：
-
-```powershell
-python YeelightScreenSync.py
 ```
 
 首次运行后，在界面中输入 Yeelight 设备 IP，然后点击刷新状态或开始同步。
@@ -94,11 +75,10 @@ pyinstaller "Yeelight Sync Pro.spec"
 
 ```text
 .
-├── core/                  # 同步服务、设备状态和灯光控制逻辑
+├── core/                  # 配置、屏幕取色、Yeelight 客户端和同步服务
 ├── ui/                    # PySide6 主界面、控制面板、预览面板和主题
 ├── widgets/               # 可复用界面组件
-├── main.py                # 推荐入口
-├── YeelightScreenSync.py  # 旧版 Tkinter 入口
+├── main.py                # 应用入口
 ├── icon.ico               # 应用图标
 └── Yeelight Sync Pro.spec # PyInstaller 打包配置
 ```
