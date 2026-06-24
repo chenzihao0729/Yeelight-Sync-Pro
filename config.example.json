@@ -1,0 +1,15 @@
+{
+  "Host": "",
+  "Port": "55443",
+  "CaptureModeIndex": 0,
+  "SampleGridIndex": 2,
+  "SampleGrid": "64 x 36",
+  "RegionPercent": 45,
+  "IntervalMs": 300,
+  "FadeMs": 200,
+  "BrightnessCap": 85,
+  "SaturationBoost": 20,
+  "SmoothingPercent": 35,
+  "Threshold": 10,
+  "StartWithWindows": false
+}
