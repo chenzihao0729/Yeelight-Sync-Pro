@@ -1,31 +1,35 @@
 # Yeelight Sync Pro
 
-Yeelight Sync Pro is a Windows desktop app that syncs the dominant color of your screen to Yeelight devices over the local LAN Control protocol.
+Yeelight Sync Pro 是一款 Windows 桌面氛围光同步工具，可以采集屏幕主色，并通过 Yeelight 局域网控制协议将颜色实时同步到支持 LAN Control 的 Yeelight 灯带或灯泡。
 
-It is designed for ambient lighting setups around monitors, TVs, desks, and gaming spaces. The app samples the screen, smooths the color changes, and sends HSV/RGB updates to a Yeelight light strip or bulb on the same network.
+English: A Windows desktop ambient-light app that syncs screen colors to Yeelight devices over LAN Control.
 
-## Features
+## 功能特性
 
-- Real-time screen color sampling.
-- Full-screen and centered-region capture modes.
-- Adjustable sync interval, fade duration, brightness cap, saturation boost, smoothing, and change threshold.
-- Device status refresh, power control, and brightness control.
-- Restores the previous light state after sync stops.
-- System tray support.
-- Automatic light/dark theme matching on Windows.
+- 实时采集屏幕颜色，适合显示器、电视、桌面和游戏氛围光场景。
+- 支持全屏取色和中心区域取色。
+- 可调节同步间隔、渐变时间、亮度上限、饱和度增强、平滑强度和变化阈值。
+- 支持设备状态刷新、开关灯和亮度调节。
+- 开始同步前保存灯具状态，停止同步后自动恢复。
+- 支持系统托盘，关闭窗口后可继续驻留后台。
+- 自动跟随 Windows 深色/浅色主题。
 
-## Requirements
+English highlights: real-time screen sampling, tray support, automatic state restore, and adjustable sync behavior.
 
-- Windows 10 or later.
-- Python 3.10 or later for source builds.
-- A Yeelight device that supports LAN Control.
-- The PC and Yeelight device must be on the same local network.
+## 环境要求
 
-Before using the app, enable `LAN Control` for the target device in the Yeelight or Mi Home app.
+- Windows 10 或更高版本。
+- 从源码运行需要 Python 3.10 或更高版本。
+- 一台支持 `LAN Control` 的 Yeelight 设备。
+- 电脑和 Yeelight 设备需要处于同一个局域网。
 
-## Quick Start
+使用前请先在 Yeelight 或米家 App 中为目标设备开启 `局域网控制 / LAN Control`。
 
-Install dependencies:
+Yeelight 局域网控制默认端口为 `55443`。
+
+## 快速开始
+
+安装依赖：
 
 ```powershell
 python -m venv .venv
@@ -33,86 +37,92 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Run the app:
+启动应用：
 
 ```powershell
 python main.py
 ```
 
-Enter your Yeelight device IP address in the app, then refresh the device status or start syncing.
+首次运行后，在界面中输入 Yeelight 设备 IP，然后刷新设备状态或开始同步。
 
-Yeelight LAN Control uses port `55443` by default.
+English: enter the Yeelight device IP address, refresh status, then start syncing.
 
-## Configuration
+## 配置说明
 
-Runtime settings are stored in `config.json` in the project root. This file is ignored by Git because it contains local device and UI preferences.
+运行时配置保存在项目根目录的 `config.json`。该文件包含本机设备 IP 和界面偏好，默认不会提交到 Git。
 
-To create a config file manually:
+如需手动创建配置文件，可以复制示例配置：
 
 ```powershell
 Copy-Item config.example.json config.json
 ```
 
-Common settings:
+常用配置项：
 
-- `Host`: Yeelight device IP address.
-- `Port`: Yeelight LAN Control port.
-- `CaptureModeIndex`: `0` for full screen, `1` for centered region.
-- `RegionPercent`: size of the centered capture region.
-- `IntervalMs`: delay between sync updates.
-- `FadeMs`: light transition duration.
-- `BrightnessCap`: maximum output brightness.
-- `SaturationBoost`: saturation amplification.
-- `SmoothingPercent`: color smoothing strength.
-- `Threshold`: minimum color-change threshold before sending updates.
+- `Host`：Yeelight 设备 IP 地址。
+- `Port`：Yeelight 局域网控制端口。
+- `CaptureModeIndex`：取色模式，`0` 为全屏，`1` 为中心区域。
+- `RegionPercent`：中心区域取色范围。
+- `IntervalMs`：同步更新间隔。
+- `FadeMs`：灯光渐变时间。
+- `BrightnessCap`：最大输出亮度。
+- `SaturationBoost`：饱和度增强。
+- `SmoothingPercent`：颜色平滑强度。
+- `Threshold`：发送更新前所需的最小颜色变化阈值。
 
-## Build
+## 打包构建
 
-Create a Windows distribution with PyInstaller:
+使用 PyInstaller 构建 Windows 可执行程序：
 
 ```powershell
 pip install pyinstaller
 pyinstaller "Yeelight Sync Pro.spec"
 ```
 
-The packaged app is written to:
+构建结果位于：
 
 ```text
 dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 ```
 
-## Project Structure
+English: build output is generated under `dist/Yeelight Sync Pro/`.
+
+## 项目结构
 
 ```text
 .
-|-- core/                  # configuration, screen sampling, Yeelight client, sync service
-|-- ui/                    # PySide6 windows, panels, and theme helpers
-|-- widgets/               # reusable UI widgets
-|-- main.py                # application entry point
-|-- icon.ico               # application icon
-`-- Yeelight Sync Pro.spec # PyInstaller build config
+|-- core/                  # 配置、屏幕取色、Yeelight 客户端和同步服务
+|-- ui/                    # PySide6 界面、面板和主题辅助
+|-- widgets/               # 可复用 UI 组件
+|-- main.py                # 应用入口
+|-- icon.ico               # 应用图标
+`-- Yeelight Sync Pro.spec # PyInstaller 打包配置
 ```
 
-## Troubleshooting
+## 常见问题
 
-### The app cannot connect to the device
+### 无法连接设备
 
-- Make sure LAN Control is enabled for the Yeelight device.
-- Make sure the PC and device are on the same network.
-- Verify the device IP address and port `55443`.
-- Check whether Windows Firewall is blocking local network access.
+- 确认目标设备已经开启 `LAN Control`。
+- 确认电脑和设备在同一个局域网。
+- 确认设备 IP 地址正确，端口为 `55443`。
+- 检查 Windows 防火墙是否阻止应用访问局域网。
 
-### The light does not react strongly enough
+### 灯光变化不明显
 
-- Lower `Threshold`.
-- Increase `BrightnessCap`.
-- Increase `SaturationBoost`.
-- Reduce `IntervalMs` for faster updates.
+- 降低 `Threshold`。
+- 提高 `BrightnessCap`。
+- 提高 `SaturationBoost`。
+- 缩短 `IntervalMs` 以提升更新频率。
 
-### Dependencies are missing
+### 提示缺少依赖
 
-Reinstall dependencies:
+重新安装依赖：
 
 ```powershell
 pip install -r requirements.txt
 ```
+
+## English Summary
+
+Yeelight Sync Pro captures the dominant screen color on Windows and sends smoothed HSV/RGB updates to Yeelight devices through LAN Control. It supports device status refresh, power control, brightness control, tray behavior, configurable sync parameters, and automatic light-state restoration when syncing stops.
