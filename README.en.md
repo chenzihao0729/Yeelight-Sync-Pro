@@ -45,8 +45,6 @@ Enter your Yeelight device IP address in the app, then refresh the device status
 
 ## Configuration
 
-Runtime settings are stored in `config.json` in the project root. This file contains local device and UI preferences, so it is ignored by Git.
-
 To create a config file manually:
 
 ```powershell
@@ -55,16 +53,15 @@ Copy-Item config.example.json config.json
 
 Common settings:
 
-- `Host`: Yeelight device IP address.
-- `Port`: Yeelight LAN Control port.
-- `CaptureModeIndex`: `0` for full screen, `1` for centered region.
-- `RegionPercent`: size of the centered capture region.
-- `IntervalMs`: delay between sync updates.
-- `FadeMs`: light transition duration.
-- `BrightnessCap`: maximum output brightness.
-- `SaturationBoost`: saturation amplification.
-- `SmoothingPercent`: color smoothing strength.
-- `Threshold`: minimum color-change threshold before sending updates.
+- Device IP Address: local IP address of the Yeelight device, stored as `Host`.
+- Capture Range: `Full Screen` or `Screen Center`, stored as `CaptureModeIndex`.
+- Sample Grid: screen sampling density, stored as `SampleGrid`.
+- Sample Region Size: size of the centered capture region, stored as `RegionPercent`.
+- Sync Interval: delay between color sync updates, stored as `IntervalMs`.
+- Fade Duration: light transition duration, stored as `FadeMs`.
+- Brightness Cap: maximum output brightness, stored as `BrightnessCap`.
+- Saturation Cap: adjusts color saturation output, stored as `SaturationBoost`.
+- Smoothing: color smoothing strength, stored as `SmoothingPercent`.
 
 ## Build
 
@@ -104,10 +101,10 @@ dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 
 ### The light does not react strongly enough
 
-- Lower `Threshold`.
-- Increase `BrightnessCap`.
-- Increase `SaturationBoost`.
-- Reduce `IntervalMs` for faster updates.
+- Increase `Brightness Cap`.
+- Increase `Saturation Cap`.
+- Reduce `Sync Interval` for faster updates.
+- Lower `Smoothing` to make color changes more responsive.
 
 ### Dependencies are missing
 

@@ -45,8 +45,6 @@ python main.py
 
 ## 配置说明
 
-运行时配置保存在项目根目录的 `config.json`。该文件包含本机设备 IP 和界面偏好，默认不会提交到 Git。
-
 如需手动创建配置文件，可以复制示例配置：
 
 ```powershell
@@ -55,16 +53,15 @@ Copy-Item config.example.json config.json
 
 常用配置项：
 
-- `Host`：Yeelight 设备 IP 地址。
-- `Port`：Yeelight 局域网控制端口。
-- `CaptureModeIndex`：取色模式，`0` 为全屏，`1` 为中心区域。
-- `RegionPercent`：中心区域取色范围。
-- `IntervalMs`：同步更新间隔。
-- `FadeMs`：灯光渐变时间。
-- `BrightnessCap`：最大输出亮度。
-- `SaturationBoost`：饱和度增强。
-- `SmoothingPercent`：颜色平滑强度。
-- `Threshold`：发送更新前所需的最小颜色变化阈值。
+- 设备 IP 地址：Yeelight 设备的局域网 IP，对应 `Host`。
+- 取色范围：可选择 `全屏` 或 `屏幕中央`，对应 `CaptureModeIndex`。
+- 采样网格：屏幕取色采样密度，对应 `SampleGrid`。
+- 采样区域大小：中心区域取色范围，对应 `RegionPercent`。
+- 同步间隔：两次颜色同步之间的时间间隔，对应 `IntervalMs`。
+- 渐变时间：灯光颜色过渡时长，对应 `FadeMs`。
+- 亮度上限：限制输出到灯具的最高亮度，对应 `BrightnessCap`。
+- 饱和度上限：调节灯光颜色饱和表现，对应 `SaturationBoost`。
+- 平滑：控制颜色变化的平滑程度，对应 `SmoothingPercent`。
 
 ## 打包构建
 
@@ -104,10 +101,10 @@ dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 
 ### 灯光变化不明显
 
-- 降低 `Threshold`。
-- 提高 `BrightnessCap`。
-- 提高 `SaturationBoost`。
-- 缩短 `IntervalMs` 以提升更新频率。
+- 提高「亮度上限」。
+- 提高「饱和度上限」。
+- 缩短「同步间隔」以提升更新频率。
+- 适当降低「平滑」，让颜色变化更灵敏。
 
 ### 提示缺少依赖
 
