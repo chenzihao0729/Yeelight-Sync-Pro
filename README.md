@@ -1,8 +1,8 @@
 # Yeelight Sync Pro
 
-Yeelight Sync Pro 是一款 Windows 桌面氛围光同步工具，可以采集屏幕主色，并通过 Yeelight 局域网控制协议将颜色实时同步到支持 LAN Control 的 Yeelight 灯带或灯泡。
+中文 | [English](README.en.md)
 
-English: A Windows desktop ambient-light app that syncs screen colors to Yeelight devices over LAN Control.
+Yeelight Sync Pro 是一款 Windows 桌面氛围光同步工具，可以采集屏幕主色，并通过 Yeelight 局域网控制协议将颜色实时同步到支持 LAN Control 的 Yeelight 灯带或灯泡。
 
 ## 功能特性
 
@@ -13,8 +13,6 @@ English: A Windows desktop ambient-light app that syncs screen colors to Yeeligh
 - 开始同步前保存灯具状态，停止同步后自动恢复。
 - 支持系统托盘，关闭窗口后可继续驻留后台。
 - 自动跟随 Windows 深色/浅色主题。
-
-English highlights: real-time screen sampling, tray support, automatic state restore, and adjustable sync behavior.
 
 ## 环境要求
 
@@ -44,8 +42,6 @@ python main.py
 ```
 
 首次运行后，在界面中输入 Yeelight 设备 IP，然后刷新设备状态或开始同步。
-
-English: enter the Yeelight device IP address, refresh status, then start syncing.
 
 ## 配置说明
 
@@ -85,8 +81,6 @@ pyinstaller "Yeelight Sync Pro.spec"
 dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 ```
 
-English: build output is generated under `dist/Yeelight Sync Pro/`.
-
 ## 项目结构
 
 ```text
@@ -122,7 +116,3 @@ English: build output is generated under `dist/Yeelight Sync Pro/`.
 ```powershell
 pip install -r requirements.txt
 ```
-
-## English Summary
-
-Yeelight Sync Pro captures the dominant screen color on Windows and sends smoothed HSV/RGB updates to Yeelight devices through LAN Control. It supports device status refresh, power control, brightness control, tray behavior, configurable sync parameters, and automatic light-state restoration when syncing stops.
