@@ -129,7 +129,7 @@ class ControlPanel(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
         layout.addWidget(self._slider_row("BrightnessCap", "亮度上限", 95, "%"))
-        layout.addWidget(self._slider_row("SaturationBoost", "饱和度上限", 90, "%"))
+        layout.addWidget(self._slider_row("SaturationBoost", "饱和度增强", 90, "%"))
         layout.addWidget(self._slider_row("SmoothingPercent", "平滑", 50, "%"))
         return panel
 

@@ -169,7 +169,7 @@ class DeviceCard(QFrame):
     def update_live_color(self, h: int, s: int, v: int):
         self.connected = True
         self.power_on = True
-        self.state_summary = f"HSV：{h}, {s}%, {v}%"
+        self.state_summary = "实时同步中"
         self.name_label.setText(self._display_name())
         self.extra_label.setText(self.state_summary)
         self._apply_style()

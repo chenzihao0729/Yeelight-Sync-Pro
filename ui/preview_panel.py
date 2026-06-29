@@ -278,6 +278,10 @@ class PreviewPanel(QFrame):
         self.refresh_button.setText("刷新中..." if refreshing else "刷新状态")
 
     def update_device_state(self, state: dict):
+        if self.is_running:
+            self.last_light_state = dict(state)
+            return
+
         power_on = state.get("power") == "on"
         try:
             brightness = int(state.get("bright") or 0)

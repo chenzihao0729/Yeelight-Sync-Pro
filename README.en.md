@@ -60,7 +60,7 @@ Common settings:
 - Sync Interval: delay between color sync updates, stored as `IntervalMs`.
 - Fade Duration: light transition duration, stored as `FadeMs`.
 - Brightness Cap: maximum output brightness, stored as `BrightnessCap`.
-- Saturation Cap: adjusts color saturation output, stored as `SaturationBoost`.
+- Saturation Boost: amplifies screen color saturation, stored as `SaturationBoost`.
 - Smoothing: color smoothing strength, stored as `SmoothingPercent`.
 
 ## Build
@@ -102,7 +102,7 @@ dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 ### The light does not react strongly enough
 
 - Increase `Brightness Cap`.
-- Increase `Saturation Cap`.
+- Increase `Saturation Boost`.
 - Reduce `Sync Interval` for faster updates.
 - Lower `Smoothing` to make color changes more responsive.
 

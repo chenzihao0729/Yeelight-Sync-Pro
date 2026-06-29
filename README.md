@@ -60,7 +60,7 @@ Copy-Item config.example.json config.json
 - 同步间隔：两次颜色同步之间的时间间隔，对应 `IntervalMs`。
 - 渐变时间：灯光颜色过渡时长，对应 `FadeMs`。
 - 亮度上限：限制输出到灯具的最高亮度，对应 `BrightnessCap`。
-- 饱和度上限：调节灯光颜色饱和表现，对应 `SaturationBoost`。
+- 饱和度增强：放大屏幕颜色的饱和度表现，对应 `SaturationBoost`。
 - 平滑：控制颜色变化的平滑程度，对应 `SmoothingPercent`。
 
 ## 打包构建
@@ -102,7 +102,7 @@ dist/Yeelight Sync Pro/Yeelight Sync Pro.exe
 ### 灯光变化不明显
 
 - 提高「亮度上限」。
-- 提高「饱和度上限」。
+- 提高「饱和度增强」。
 - 缩短「同步间隔」以提升更新频率。
 - 适当降低「平滑」，让颜色变化更灵敏。
 
