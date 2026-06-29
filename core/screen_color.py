@@ -1,16 +1,11 @@
 import colorsys
+import math
 
 from PIL import ImageGrab
 
 
 def clamp(value, low, high):
     return max(low, min(high, value))
-
-
-def color_distance(a, b):
-    if a is None or b is None:
-        return 999
-    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
 
 
 def hue_distance(a, b):
@@ -61,9 +56,23 @@ def average_screen_color(config, last_color):
     g = sum(pixel[1] for pixel in pixels) / count
     b = sum(pixel[2] for pixel in pixels) / count
 
-    hue_float, saturation_float, _value_float = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+    hue_x = 0.0
+    hue_y = 0.0
+    saturation_total = 0.0
+    for pr, pg, pb in pixels:
+        pixel_hue, pixel_saturation, pixel_value = colorsys.rgb_to_hsv(pr / 255.0, pg / 255.0, pb / 255.0)
+        weight = pixel_saturation * pixel_value
+        angle = pixel_hue * math.tau
+        hue_x += math.cos(angle) * weight
+        hue_y += math.sin(angle) * weight
+        saturation_total += pixel_saturation
+
+    if abs(hue_x) > 0.0001 or abs(hue_y) > 0.0001:
+        hue_float = (math.atan2(hue_y, hue_x) / math.tau) % 1.0
+    else:
+        hue_float, _unused_saturation, _unused_value = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
     hue = int(round(hue_float * 359))
-    source_saturation = int(round(saturation_float * 100))
+    source_saturation = int(round((saturation_total / count) * 100))
     saturation = source_saturation
 
     luminance = (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
@@ -73,7 +82,7 @@ def average_screen_color(config, last_color):
     brightness = int(clamp(brightness, 1, 100))
 
     was_neutral = bool(last_color and last_color.get("is_neutral"))
-    is_neutral = source_saturation < (12 if was_neutral else 6)
+    is_neutral = is_dark or source_saturation < (12 if was_neutral else 6)
     if is_neutral:
         saturation = 0
     else:

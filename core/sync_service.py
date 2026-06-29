@@ -1,10 +1,11 @@
 import threading
 import time
+import colorsys
 
 from PySide6.QtCore import QObject, Signal
 
 from core.config import DEFAULT_CONFIG, load_config, save_config
-from core.screen_color import average_screen_color, color_distance, hue_distance
+from core.screen_color import average_screen_color, hue_distance
 from core.yeelight_client import LIGHT_STATE_PROPS, YeelightClient
 
 
@@ -24,6 +25,14 @@ def rgb_int_to_tuple(value) -> tuple[int, int, int]:
     except (TypeError, ValueError):
         return 0, 0, 0
     return (rgb_int >> 16) & 255, (rgb_int >> 8) & 255, rgb_int & 255
+
+
+def average_rgb_to_hsv(r: int, g: int, b: int) -> tuple[int, int, int]:
+    hue_float, saturation_float, value_float = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+    hue = max(1, min(359, int(round(hue_float * 359))))
+    saturation = max(0, min(100, int(round(saturation_float * 100))))
+    brightness = max(1, min(100, int(round(value_float * 100))))
+    return hue, saturation, brightness
 
 
 def format_light_state(state: dict) -> str:
@@ -62,7 +71,6 @@ class YeelightSyncService(QObject):
         self.stop_event = threading.Event()
         self.worker = None
         self.last_color = None
-        self.last_sent_rgb = None
         self.last_sent_color = None
         self.last_sent_at = 0.0
         self.pre_sync_state = None
@@ -131,7 +139,6 @@ class YeelightSyncService(QObject):
         self.stop_event.clear()
         self.running = True
         self.last_color = None
-        self.last_sent_rgb = None
         self.last_sent_color = None
         self.last_sent_at = 0.0
         self.pre_sync_state = None
@@ -178,7 +185,9 @@ class YeelightSyncService(QObject):
         elif color_mode == "3" and state.get("hue") and state.get("sat"):
             self.client.send("set_hsv", [int(state["hue"]), int(state["sat"]), "smooth", duration])
         elif state.get("rgb"):
-            self.client.send("set_rgb", [max(1, int(state["rgb"])), "smooth", duration])
+            r, g, b = rgb_int_to_tuple(state.get("rgb"))
+            hue, saturation, _brightness = average_rgb_to_hsv(r, g, b)
+            self.client.send("set_hsv", [hue, saturation, "smooth", duration])
 
         if bright:
             self.client.send("set_bright", [int(bright), "smooth", duration])
@@ -201,17 +210,16 @@ class YeelightSyncService(QObject):
             return True
 
         threshold = max(MIN_VISIBLE_DELTA, int(config["Threshold"]))
-        rgb_delta = color_distance(self.last_sent_rgb, color_state["rgb"])
         brightness_delta = abs(color_state["brightness"] - self.last_sent_color["brightness"])
         saturation_delta = abs(color_state["saturation"] - self.last_sent_color["saturation"])
         hue_delta = hue_distance(color_state["hue"], self.last_sent_color["hue"])
 
         if color_state.get("is_dark") or color_state.get("is_neutral"):
-            return rgb_delta >= threshold or brightness_delta >= max(2, threshold // 3)
+            return brightness_delta >= max(2, threshold // 3) or saturation_delta >= max(3, threshold // 2)
 
         hue_weight = max(color_state["saturation"], self.last_sent_color["saturation"]) / 100.0
         weighted_hue_delta = hue_delta * hue_weight
-        visible_delta = max(rgb_delta, weighted_hue_delta, saturation_delta, brightness_delta)
+        visible_delta = max(weighted_hue_delta, saturation_delta, brightness_delta)
         return visible_delta >= threshold
 
     def _send_color_state(self, color_state: dict, duration: int):
@@ -227,15 +235,10 @@ class YeelightSyncService(QObject):
         if should_send_brightness and previous_brightness is not None and brightness < previous_brightness:
             self.client.send("set_bright", [brightness, "smooth", duration])
 
-        if color_state.get("is_dark"):
-            self.client.send("set_rgb", [1, "smooth", duration])
-        elif color_state.get("is_neutral"):
-            self.client.send("set_rgb", [16777215, "smooth", duration])
-        else:
-            self.client.send(
-                "set_hsv",
-                [color_state["hue"], color_state["saturation"], "smooth", duration],
-            )
+        self.client.send(
+            "set_hsv",
+            [color_state["hue"], color_state["saturation"], "smooth", duration],
+        )
 
         if should_send_brightness and not (
             previous_brightness is not None and brightness < previous_brightness
@@ -268,7 +271,6 @@ class YeelightSyncService(QObject):
                 if self._should_send_color(color_state, config, now):
                     duration = int(config["FadeMs"])
                     self._send_color_state(color_state, duration)
-                    self.last_sent_rgb = rgb
                     self.last_sent_color = color_state
                     self.last_sent_at = now
                     self.sentChanged.emit("上次发送: " + time.strftime("%H:%M:%S"))
