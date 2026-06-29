@@ -47,10 +47,12 @@ def yeelight_hsv(hue: int, saturation: int, brightness: int) -> tuple[int, int, 
     if saturation < 8 or brightness <= 2:
         return 1, 0, brightness
 
-    if 75 <= hue < 145:
-        green_strength = 1.0 - abs(hue - 110) / 35.0
-        hue += round(8 * max(0.0, green_strength))
-        saturation = round(saturation * (1.0 - 0.08 * max(0.0, green_strength)))
+    if 70 <= hue < 150:
+        green_strength = 1.0 - abs(hue - 118) / 48.0
+        green_strength = max(0.0, green_strength)
+        hue += round(14 * green_strength)
+        saturation = round(saturation * (1.0 - 0.28 * green_strength))
+        brightness = round(brightness * (1.0 - 0.10 * green_strength))
     elif 145 <= hue <= 190:
         cyan_strength = 1.0 - abs(hue - 168) / 23.0
         hue += round(15 * max(0.0, cyan_strength))
