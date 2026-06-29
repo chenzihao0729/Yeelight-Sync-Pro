@@ -13,10 +13,10 @@ DEFAULT_CONFIG = {
     "SampleGrid": "64 x 36",
     "RegionPercent": 45,
     "IntervalMs": 300,
-    "FadeMs": 200,
+    "FadeMs": 260,
     "BrightnessCap": 85,
     "SaturationBoost": 20,
-    "SmoothingPercent": 35,
+    "SmoothingPercent": 55,
     "Threshold": 10,
     "StartWithWindows": False,
 }

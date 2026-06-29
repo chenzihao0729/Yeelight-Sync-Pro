@@ -8,7 +8,7 @@ from core.screen_color import average_screen_color, color_distance, hue_distance
 from core.yeelight_client import LIGHT_STATE_PROPS, YeelightClient
 
 
-MAX_RESEND_INTERVAL_MS = 1600
+MAX_RESEND_INTERVAL_MS = 3200
 MIN_VISIBLE_DELTA = 2
 
 
@@ -190,8 +190,14 @@ class YeelightSyncService(QObject):
             return True
 
         interval_ms = max(30, int(config["IntervalMs"]))
-        resend_interval = max(MAX_RESEND_INTERVAL_MS, interval_ms * 4)
-        if (now - self.last_sent_at) * 1000 >= resend_interval:
+        elapsed_ms = (now - self.last_sent_at) * 1000
+        fade_ms = max(0, int(config["FadeMs"]))
+        min_send_interval = max(90, min(450, int(fade_ms * 0.7)))
+        if elapsed_ms < min_send_interval:
+            return False
+
+        resend_interval = max(MAX_RESEND_INTERVAL_MS, interval_ms * 8)
+        if elapsed_ms >= resend_interval:
             return True
 
         threshold = max(MIN_VISIBLE_DELTA, int(config["Threshold"]))
@@ -209,6 +215,18 @@ class YeelightSyncService(QObject):
         return visible_delta >= threshold
 
     def _send_color_state(self, color_state: dict, duration: int):
+        previous_brightness = None
+        if self.last_sent_color is not None:
+            previous_brightness = self.last_sent_color["brightness"]
+        brightness = color_state["brightness"]
+        should_send_brightness = (
+            previous_brightness is None
+            or abs(brightness - previous_brightness) >= 2
+        )
+
+        if should_send_brightness and previous_brightness is not None and brightness < previous_brightness:
+            self.client.send("set_bright", [brightness, "smooth", duration])
+
         if color_state.get("is_dark"):
             self.client.send("set_rgb", [1, "smooth", duration])
         elif color_state.get("is_neutral"):
@@ -218,10 +236,11 @@ class YeelightSyncService(QObject):
                 "set_hsv",
                 [color_state["hue"], color_state["saturation"], "smooth", duration],
             )
-        self.client.send(
-            "set_bright",
-            [color_state["brightness"], "smooth", duration],
-        )
+
+        if should_send_brightness and not (
+            previous_brightness is not None and brightness < previous_brightness
+        ):
+            self.client.send("set_bright", [brightness, "smooth", duration])
 
     def _sync_worker(self):
         try:

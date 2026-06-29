@@ -67,11 +67,13 @@ def average_screen_color(config, last_color):
     saturation = source_saturation
 
     luminance = (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
-    is_dark = luminance < 4
+    was_dark = bool(last_color and last_color.get("is_dark"))
+    is_dark = luminance < (8 if was_dark else 4)
     brightness = int(round((luminance / 255.0) * int(config["BrightnessCap"])))
     brightness = int(clamp(brightness, 1, 100))
 
-    is_neutral = source_saturation < 8
+    was_neutral = bool(last_color and last_color.get("is_neutral"))
+    is_neutral = source_saturation < (12 if was_neutral else 6)
     if is_neutral:
         saturation = 0
     else:
@@ -83,7 +85,7 @@ def average_screen_color(config, last_color):
 
     smoothing = int(config["SmoothingPercent"])
     if last_color is not None and smoothing > 0:
-        alpha = clamp(smoothing / 100.0, 0.0, 0.95)
+        alpha = clamp(0.18 + (smoothing / 100.0) * 0.77, 0.0, 0.96)
         if not is_neutral and last_color["saturation"] > 0:
             previous_hue = last_color["hue"]
             hue_delta = ((hue - previous_hue + 180) % 360) - 180
