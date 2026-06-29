@@ -111,7 +111,7 @@ class PreviewPanel(QFrame):
         metrics_layout = QVBoxLayout(metrics)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(0)
-        metrics_layout.addWidget(self._metric_card("color", "当前颜色", "RGB 0, 0, 0", "#101010", 0))
+        metrics_layout.addWidget(self._metric_card("color", "当前颜色", "HSV 0, 0%, 0%", "#101010", 0))
 
         self.output_card = self._output_card()
 
@@ -365,7 +365,12 @@ class PreviewPanel(QFrame):
         if h is not None and s is not None and v is not None:
             self.metric_values["color"].setText(f"HSV {h}, {s}%, {v}%")
         else:
-            self.metric_values["color"].setText(f"RGB {r}, {g}, {b}")
+            hue, saturation, value = QColor(int(r), int(g), int(b)).getHsv()[:3]
+            if hue < 0:
+                hue = 0
+            self.metric_values["color"].setText(
+                f"HSV {hue}, {round(saturation / 255 * 100)}%, {round(value / 255 * 100)}%"
+            )
         target = QColor(int(r), int(g), int(b))
         self._animate_color_card(target)
         if self.is_running:
@@ -381,13 +386,30 @@ class PreviewPanel(QFrame):
     def _apply_standby_color_card(self):
         if self.last_light_state and self.last_light_state.get("power") == "on":
             color = self._light_state_to_qcolor(self.last_light_state)
-            self.metric_values["color"].setText(f"RGB {color.red()}, {color.green()}, {color.blue()}")
+            self.metric_values["color"].setText(self._light_state_to_hsv_text(self.last_light_state))
             self._animate_color_card(color)
             return
 
         color = QColor(16, 18, 23) if self.app_theme.dark else QColor(243, 247, 251)
         self.metric_values["color"].setText("")
         self._animate_color_card(color)
+
+    def _light_state_to_hsv_text(self, state: dict) -> str:
+        brightness = self._bounded_int(state.get("bright"), 100, 0, 100)
+        color_mode = str(state.get("color_mode") or "1")
+
+        if color_mode == "3":
+            hue = self._bounded_int(state.get("hue"), 0, 0, 359)
+            saturation = self._bounded_int(state.get("sat"), 0, 0, 100)
+            return f"HSV {hue}, {saturation}%, {brightness}%"
+
+        color = self._light_state_to_qcolor(state)
+        hue = color.hsvHue()
+        saturation = round(color.hsvSaturation() / 255 * 100)
+        value = round(color.value() / 255 * 100)
+        if hue < 0:
+            hue = 0
+        return f"HSV {hue}, {saturation}%, {value}%"
 
     def _light_state_to_qcolor(self, state: dict) -> QColor:
         brightness = self._bounded_int(state.get("bright"), 100, 0, 100) / 100.0
