@@ -56,6 +56,28 @@ class YeelightClient:
                 self.command_sock = None
                 sock = self.command_socket()
                 sock.sendall(payload)
+            self._drain_response(sock)
+
+    def _drain_response(self, sock):
+        previous_timeout = sock.gettimeout()
+        try:
+            sock.settimeout(0.03)
+            chunks = []
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    self.command_sock = None
+                    break
+                chunks.append(chunk)
+                if b"\n" in chunk:
+                    break
+        except (OSError, TimeoutError):
+            pass
+        finally:
+            try:
+                sock.settimeout(previous_timeout)
+            except OSError:
+                pass
 
     def query_properties(self, properties):
         with self.lock:

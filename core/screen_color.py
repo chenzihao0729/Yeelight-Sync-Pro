@@ -7,14 +7,26 @@ def clamp(value, low, high):
     return max(low, min(high, value))
 
 
-def hsv_signature(hue, saturation, brightness):
-    return (int(hue) << 16) | (int(saturation) << 8) | int(brightness)
-
-
 def color_distance(a, b):
     if a is None or b is None:
         return 999
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+
+
+def hue_distance(a, b):
+    if a is None or b is None:
+        return 359
+    return abs((int(a) - int(b) + 180) % 360 - 180)
+
+
+def parse_sample_grid(value):
+    try:
+        width_text, height_text = str(value).lower().replace(" ", "").split("x", 1)
+        width = int(width_text)
+        height = int(height_text)
+    except (TypeError, ValueError):
+        return 64, 36
+    return max(8, min(width, 256)), max(5, min(height, 144))
 
 
 def screen_size():
@@ -37,8 +49,9 @@ def capture_rect(mode_index, region_percent):
 
 def average_screen_color(config, last_color):
     x, y, width, height = capture_rect(config["CaptureModeIndex"], config["RegionPercent"])
+    sample_width, sample_height = parse_sample_grid(config.get("SampleGrid", "64 x 36"))
     image = ImageGrab.grab(bbox=(x, y, x + width, y + height))
-    image = image.resize((64, 36)).convert("RGB")
+    image = image.resize((sample_width, sample_height)).convert("RGB")
     pixel_source = getattr(image, "get_flattened_data", image.getdata)
     pixels = list(pixel_source())
     image.close()

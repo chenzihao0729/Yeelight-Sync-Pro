@@ -4,8 +4,12 @@ import time
 from PySide6.QtCore import QObject, Signal
 
 from core.config import DEFAULT_CONFIG, load_config, save_config
-from core.screen_color import average_screen_color, color_distance, hsv_signature
+from core.screen_color import average_screen_color, color_distance, hue_distance
 from core.yeelight_client import LIGHT_STATE_PROPS, YeelightClient
+
+
+MAX_RESEND_INTERVAL_MS = 1600
+MIN_VISIBLE_DELTA = 2
 
 
 def normalize_config(config: dict) -> dict:
@@ -59,7 +63,8 @@ class YeelightSyncService(QObject):
         self.worker = None
         self.last_color = None
         self.last_sent_rgb = None
-        self.last_signature = -1
+        self.last_sent_color = None
+        self.last_sent_at = 0.0
         self.pre_sync_state = None
         self.refresh_lock = threading.Lock()
         self.restore_lock = threading.Lock()
@@ -127,7 +132,8 @@ class YeelightSyncService(QObject):
         self.running = True
         self.last_color = None
         self.last_sent_rgb = None
-        self.last_signature = -1
+        self.last_sent_color = None
+        self.last_sent_at = 0.0
         self.pre_sync_state = None
         self.runningChanged.emit(True)
         self.statusChanged.emit("正在启动同步...")
@@ -179,6 +185,44 @@ class YeelightSyncService(QObject):
 
         self.client.send("set_power", [power, "smooth", duration])
 
+    def _should_send_color(self, color_state: dict, config: dict, now: float) -> bool:
+        if self.last_sent_color is None:
+            return True
+
+        interval_ms = max(30, int(config["IntervalMs"]))
+        resend_interval = max(MAX_RESEND_INTERVAL_MS, interval_ms * 4)
+        if (now - self.last_sent_at) * 1000 >= resend_interval:
+            return True
+
+        threshold = max(MIN_VISIBLE_DELTA, int(config["Threshold"]))
+        rgb_delta = color_distance(self.last_sent_rgb, color_state["rgb"])
+        brightness_delta = abs(color_state["brightness"] - self.last_sent_color["brightness"])
+        saturation_delta = abs(color_state["saturation"] - self.last_sent_color["saturation"])
+        hue_delta = hue_distance(color_state["hue"], self.last_sent_color["hue"])
+
+        if color_state.get("is_dark") or color_state.get("is_neutral"):
+            return rgb_delta >= threshold or brightness_delta >= max(2, threshold // 3)
+
+        hue_weight = max(color_state["saturation"], self.last_sent_color["saturation"]) / 100.0
+        weighted_hue_delta = hue_delta * hue_weight
+        visible_delta = max(rgb_delta, weighted_hue_delta, saturation_delta, brightness_delta)
+        return visible_delta >= threshold
+
+    def _send_color_state(self, color_state: dict, duration: int):
+        if color_state.get("is_dark"):
+            self.client.send("set_rgb", [1, "smooth", duration])
+        elif color_state.get("is_neutral"):
+            self.client.send("set_rgb", [16777215, "smooth", duration])
+        else:
+            self.client.send(
+                "set_hsv",
+                [color_state["hue"], color_state["saturation"], "smooth", duration],
+            )
+        self.client.send(
+            "set_bright",
+            [color_state["brightness"], "smooth", duration],
+        )
+
     def _sync_worker(self):
         try:
             self._configure_client()
@@ -192,11 +236,6 @@ class YeelightSyncService(QObject):
                 config = normalize_config(self.config)
                 color_state = average_screen_color(config, self.last_color)
                 rgb = color_state["rgb"]
-                signature = hsv_signature(
-                    color_state["hue"],
-                    color_state["saturation"],
-                    color_state["brightness"],
-                )
 
                 self.colorChanged.emit(
                     rgb[0],
@@ -206,26 +245,13 @@ class YeelightSyncService(QObject):
                     color_state["saturation"],
                     color_state["brightness"],
                 )
-                if (
-                    color_distance(self.last_sent_rgb, rgb) >= int(config["Threshold"])
-                    and signature != self.last_signature
-                ):
+                now = time.monotonic()
+                if self._should_send_color(color_state, config, now):
                     duration = int(config["FadeMs"])
-                    if color_state.get("is_dark"):
-                        self.client.send("set_rgb", [1, "smooth", duration])
-                    elif color_state.get("is_neutral"):
-                        self.client.send("set_rgb", [16777215, "smooth", duration])
-                    else:
-                        self.client.send(
-                            "set_hsv",
-                            [color_state["hue"], color_state["saturation"], "smooth", duration],
-                        )
-                    self.client.send(
-                        "set_bright",
-                        [color_state["brightness"], "smooth", duration],
-                    )
-                    self.last_signature = signature
+                    self._send_color_state(color_state, duration)
                     self.last_sent_rgb = rgb
+                    self.last_sent_color = color_state
+                    self.last_sent_at = now
                     self.sentChanged.emit("上次发送: " + time.strftime("%H:%M:%S"))
 
                 self.last_color = color_state
