@@ -261,10 +261,3 @@ class MainWindow(QWidget):
             return
         event.ignore()
         self.hide()
-        if self.tray_icon:
-            self.tray_icon.showMessage(
-                "Yeelight Sync Pro",
-                "程序已最小化到托盘，右键托盘图标可退出。",
-                QSystemTrayIcon.Information,
-                2500,
-            )
