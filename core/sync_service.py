@@ -13,6 +13,10 @@ MAX_RESEND_INTERVAL_MS = 3200
 MIN_VISIBLE_DELTA = 2
 
 
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
+
 def normalize_config(config: dict) -> dict:
     merged = DEFAULT_CONFIG.copy()
     merged.update(config or {})
@@ -33,6 +37,26 @@ def average_rgb_to_hsv(r: int, g: int, b: int) -> tuple[int, int, int]:
     saturation = max(0, min(100, int(round(saturation_float * 100))))
     brightness = max(1, min(100, int(round(value_float * 100))))
     return hue, saturation, brightness
+
+
+def yeelight_hsv(hue: int, saturation: int, brightness: int) -> tuple[int, int, int]:
+    hue = int(hue) % 360
+    saturation = int(clamp(saturation, 0, 100))
+    brightness = int(clamp(brightness, 1, 100))
+
+    if saturation < 8 or brightness <= 2:
+        return 1, 0, brightness
+
+    if 75 <= hue < 145:
+        green_strength = 1.0 - abs(hue - 110) / 35.0
+        hue += round(8 * max(0.0, green_strength))
+        saturation = round(saturation * (1.0 - 0.08 * max(0.0, green_strength)))
+    elif 145 <= hue <= 190:
+        cyan_strength = 1.0 - abs(hue - 168) / 23.0
+        hue += round(15 * max(0.0, cyan_strength))
+        saturation = round(saturation * (1.0 - 0.05 * max(0.0, cyan_strength)))
+
+    return int(clamp(hue, 1, 359)), int(clamp(saturation, 0, 100)), brightness
 
 
 def format_light_state(state: dict) -> str:
@@ -183,10 +207,16 @@ class YeelightSyncService(QObject):
         if color_mode == "2" and state.get("ct"):
             self.client.send("set_ct_abx", [int(state["ct"]), "smooth", duration])
         elif color_mode == "3" and state.get("hue") and state.get("sat"):
-            self.client.send("set_hsv", [int(state["hue"]), int(state["sat"]), "smooth", duration])
+            hue, saturation, _brightness = yeelight_hsv(
+                int(state["hue"]),
+                int(state["sat"]),
+                int(bright or 100),
+            )
+            self.client.send("set_hsv", [hue, saturation, "smooth", duration])
         elif state.get("rgb"):
             r, g, b = rgb_int_to_tuple(state.get("rgb"))
             hue, saturation, _brightness = average_rgb_to_hsv(r, g, b)
+            hue, saturation, _brightness = yeelight_hsv(hue, saturation, int(bright or _brightness))
             self.client.send("set_hsv", [hue, saturation, "smooth", duration])
 
         if bright:
@@ -235,10 +265,12 @@ class YeelightSyncService(QObject):
         if should_send_brightness and previous_brightness is not None and brightness < previous_brightness:
             self.client.send("set_bright", [brightness, "smooth", duration])
 
-        self.client.send(
-            "set_hsv",
-            [color_state["hue"], color_state["saturation"], "smooth", duration],
+        hue, saturation, brightness = yeelight_hsv(
+            color_state["hue"],
+            color_state["saturation"],
+            color_state["brightness"],
         )
+        self.client.send("set_hsv", [hue, saturation, "smooth", duration])
 
         if should_send_brightness and not (
             previous_brightness is not None and brightness < previous_brightness
